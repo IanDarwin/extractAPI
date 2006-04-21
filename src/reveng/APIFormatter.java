@@ -14,9 +14,9 @@ import java.util.zip.ZipFile;
 
 /**
  * <p>
- * APIFormatter reads one or more Zip files, gets all entries from each
+ * APIFormatter is an abstract class that reads one or more Zip files, gets all entries from each
  * and, for each entry that ends in ".class", loads it with Class.forName()
- * and hands it off to a doClass(Class c) method declared in a subclass.
+ * and hands it off to a Template Method doClass(Class c) declared in a subclass.
  * <br/>TODO<br/>
  * Use GETOPT to control doingStandardClasses, verbosity level, etc.
  * @author	Ian Darwin, Ian@DarwinSys.com
@@ -26,41 +26,58 @@ public abstract class APIFormatter {
 
 	/** True if we are doing classpath, so only do java. and javax. */
 	protected static boolean doingStandardClasses = true;
+	/** True to skip names that begin "sun." or "com.sun." */
+	private boolean skipSunInternal = true;	// change to false if you make it an option.
 	
 	protected int doArgs(String[] argv) throws IOException {
 		/** Counter of fields/methods printed. */
 		int n = 0;
 
-		// TODO: options
-		// -b - process bootclasspath
-		// -c - process classpath (default)
-		// -s - only process "java." and "javax."
-
-		if (argv.length == 0) {
+		// TODO: option
+		// -s - skipSunInternal = true;
+		
+		if (argv.length == 1 && "-b".equals(argv[0])) {
+			String s = System.getProperty("sun.boot.class.path");
+			doClassPath(s);
+		} else if (argv.length == 0) {
 			// No arguments, look in CLASSPATH
-			String s = System.getProperty("java.class.path");
-			//  break apart with path sep.
-			String pathSep = System.getProperty("path.separator");
-			StringTokenizer st = new StringTokenizer(s, pathSep);
-			// Process each zip in classpath
-			while (st.hasMoreTokens()) {
-				String thisFile = st.nextToken();
-				System.err.println("Trying path " + thisFile);
-				if (thisFile.endsWith(".zip") || thisFile.endsWith(".jar"))
-					processOneZip(thisFile);
-			}
+			String classPath = System.getProperty("java.class.path");
+			doClassPath(classPath);
 		} else {
 			// We have arguments, process them as zip/jar files
 			// doingStandardClasses = false;
 			for (int i=0; i<argv.length; i++)
-				processOneZip(argv[i]);
+				processOneFile(argv[i]);
 		}
 
 		return n;
 	}
 
+	/**
+	 * Break a "ClassPath"-like String into individual components
+	 * @param classPath
+	 * @throws IOException
+	 */
+	private void doClassPath(String classPath) throws IOException {
+		//  break apart with path sep.
+		String pathSep = System.getProperty("path.separator");
+		StringTokenizer st = new StringTokenizer(classPath, pathSep);
+		// Process each zip in classpath
+		while (st.hasMoreTokens()) {
+			String thisFile = st.nextToken();
+			System.err.println("Trying path " + thisFile);
+			processOneFile(thisFile);
+		}
+	}
+
 	/** For each Zip file, for each entry, xref it */
-	public void processOneZip(String fileName) throws IOException {
+	public void processOneFile(String fileName) throws IOException {
+		if (fileName.endsWith(".class")) {
+			doClass(fileName);
+		}
+		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
+			System.err.printf("pocessOneFile: Do not understand file %s%n", fileName);
+		}
 			List<ZipEntry> entries = new ArrayList<ZipEntry>();
 			ZipFile zipFile = null;
 
@@ -113,16 +130,28 @@ public abstract class APIFormatter {
 				String className = zipName.replace('/', '.').
 					substring(0, zipName.length() - 6);	// 6 for ".class"
 
-				// Now get the Class object for it.
-				Class c = null;
-				try {
-					c = Class.forName(className);
-					// Hand it off to the subclass...
-					doClass(c);
-				} catch (ClassNotFoundException ex) {
-					System.err.println("Error: " + ex);
-				}
+				// Now process the class.
+				doClass(className);
+				
 			}
+	}
+	
+	/**
+	 * This has the same name and argument as the Template Method but is only used here.
+	 * @param className
+	 * @throws IOException
+	 */
+	private void doClass(String className) throws IOException {
+		if (skipSunInternal && (className.startsWith("sun.") || className.startsWith("com.sun."))) {
+			return;
+		}
+		try {
+			Class c = Class.forName(className);
+			// Hand it off to the subclass...
+			doClass(c);
+		} catch (ClassNotFoundException e) {
+			System.err.println("Error: " + e);
+		}
 	}
 
 	/** Template method to format the fields and methods of one class, given its name.
