@@ -16,11 +16,10 @@ import java.lang.reflect.Modifier;
  * <p>This is a clean-room implementation: I did not look at the code
  * for Sun's javap or any similar tool in preparing this program.
  * XXX TODO:<ul>
- * <li>Class printing: add superclasses.
  * <li>Collapse common code in printing Constructors and Methods
  * <li>Method printing: add exceptions
  * <li>Arguments: Handle arrays (names begin [L)
- * <li>Provide default (0, false, null) based on type; use in return statements
+ * <li>Use default return types consistently: in return statements
  *		and in assigment to protected final variables.
  * </ul>
  * @author Ian Darwin, http://www.darwinsys.com/
@@ -78,7 +77,8 @@ public class RevEngAPI extends APIFormatter {
 		out.print("class ");
 		out.print(trim(c.getName()));
 		out.print(' ');
-		// XXX get superclass 
+		out.print("extends ");
+		out.print(c.getSuperclass().getName());
 		out.println('{');
 
 		// print constructors
@@ -204,15 +204,17 @@ public class RevEngAPI extends APIFormatter {
 	private String defaultValue(Class c) {
 		if (c.getName().equals("boolean"))
 			return "false";
-		// XXX else if object type return null;
-		else return "0";
+		if (c.isPrimitive()) {
+			return "0";
+		}
+		return "null";
 	}
 
 	public void startFile() {
-		// XXX save filename as project name
+		// maybe save filename as project name?
 	}
 
 	public void endFile() {
-		// XXX generate a trivial "build.xml" for Ant to create the jar file.
+		// maybe generate a trivial "build.xml" for Ant to create the jar file?
 	}
 }
