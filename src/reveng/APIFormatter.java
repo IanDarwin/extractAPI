@@ -102,9 +102,9 @@ public abstract class APIFormatter {
 				}
 
 				// If doing CLASSPATH, Ignore com.* which are "internal API".
-			// 	if (doingStandardClasses && !zipName.startsWith("java")){
-			// 		continue;
-			// 	}
+				// 	if (doingStandardClasses && !zipName.startsWith("java")){
+				// 		continue;
+				// 	}
 			
 				// Convert the zip file entry name, like
 				//	java/lang/Math.class
@@ -117,16 +117,15 @@ public abstract class APIFormatter {
 				Class c = null;
 				try {
 					c = Class.forName(className);
+					// Hand it off to the subclass...
+					doClass(c);
 				} catch (ClassNotFoundException ex) {
 					System.err.println("Error: " + ex);
 				}
-
-				// Hand it off to the subclass...
-				doClass(c);
 			}
 	}
 
-	/** Format the fields and methods of one class, given its name.
+	/** Template method to format the fields and methods of one class, given its name.
 	 */
 	protected abstract void doClass(Class c) throws IOException;
 }
