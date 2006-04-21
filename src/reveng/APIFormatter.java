@@ -1,8 +1,16 @@
+package reveng;
 
-
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 /**
  * <p>
@@ -53,7 +61,7 @@ public abstract class APIFormatter {
 
 	/** For each Zip file, for each entry, xref it */
 	public void processOneZip(String fileName) throws IOException {
-			List entries = new ArrayList();
+			List<ZipEntry> entries = new ArrayList<ZipEntry>();
 			ZipFile zipFile = null;
 
 			try {

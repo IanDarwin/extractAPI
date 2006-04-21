@@ -1,7 +1,13 @@
+package reveng;
 
-
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /** Make up a compilable version of a given Sun or other API, 
  * so developers can compile against it without a licensed copy. In Sun's case,
