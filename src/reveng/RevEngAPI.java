@@ -32,12 +32,12 @@ public class RevEngAPI extends APIFormatter {
 	}
 
 	private final static String PREFIX_ARG = "arg";
+	
 	/** Make up names like "arg0" "arg1", etc. */
 	private String mkName(String name, int number) {
 		return new StringBuffer(name).append(number).toString();
 	}
 
-	/** NOT THREAD SAFE */
 	private String className;
 	private int classNameOffset;
 
@@ -77,9 +77,12 @@ public class RevEngAPI extends APIFormatter {
 		out.print("class ");
 		out.print(trim(c.getName()));
 		out.print(' ');
-		out.print("extends ");
-		out.print(c.getSuperclass().getName());
-		out.println('{');
+		final Class superclass = c.getSuperclass();
+		if (superclass != null) {
+			out.print("extends ");
+			out.print(superclass.getName());
+		}
+		out.println(" {");
 
 		// print constructors
 		Constructor[] ctors = c.getDeclaredConstructors();
@@ -105,7 +108,7 @@ public class RevEngAPI extends APIFormatter {
 			out.print("\t}");
 		}
 
-		// print method names
+		// print methods
 		Method[] mems = c.getDeclaredMethods();
 		for (int i=0; i< mems.length; i++) {
 			if (i == 0) {
@@ -153,7 +156,7 @@ public class RevEngAPI extends APIFormatter {
 			if (Modifier.isFinal(mods)) {
 				try {
 					out.print(" = " + f.get(null));
-				} catch (IllegalAccessException ex) {
+				} catch (Exception ex) {
 					out.print("; // " + ex.toString());
 				}
 			}
