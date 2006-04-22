@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -72,33 +74,38 @@ public abstract class APIFormatter {
 
 	/** For each Zip file, for each entry, xref it */
 	public void processOneFile(String fileName) throws IOException {
+		System.out.printf("APIFormatter.processOneFile(%s)%n", fileName);
 		if (fileName.endsWith(".class")) {
 			doClass(fileName);
 		}
 		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
 			System.err.printf("pocessOneFile: Do not understand file %s%n", fileName);
 		}
-			List<ZipEntry> entries = new ArrayList<ZipEntry>();
+			List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
 			ZipFile zipFile = null;
 
 			try {
 				zipFile = new ZipFile(new File(fileName));
 			} catch (ZipException zz) {
-				throw new FileNotFoundException(zz.toString() + fileName);
+				throw new FileNotFoundException(zz.toString() + ' ' + fileName);
 			}
 			Enumeration all = zipFile.entries();
 
 			// Put the entries into the List for sorting...
 			while (all.hasMoreElements()) {
 				ZipEntry zipEntry = (ZipEntry)all.nextElement();
-				entries.add(zipEntry);
+				zipEntries.add(zipEntry);
 			}
 
 			// Sort the entries (by class name)
-			// Collections.sort(entries);
+			Collections.sort(zipEntries, new Comparator<ZipEntry>() {
+				public int compare(ZipEntry o1, ZipEntry o2) {
+					return o1.getName().compareToIgnoreCase(o2.getName());
+				}				
+			});
 
 			// Process all the entries in this zip.
-			Iterator it = entries.iterator();
+			Iterator it = zipEntries.iterator();
 			while (it.hasNext()) {
 				ZipEntry zipEntry = (ZipEntry)it.next();
 				String zipName = zipEntry.getName();
