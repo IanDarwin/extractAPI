@@ -73,7 +73,7 @@ public class RevEngAPI extends APIFormatter {
 		}
 		// print class header
 		int cMods = c.getModifiers();
-		printMods(cMods, out);
+		printModifiers(cMods, out);
 		out.print("class ");
 		out.print(trim(c.getName()));
 		out.print(' ');
@@ -83,65 +83,7 @@ public class RevEngAPI extends APIFormatter {
 			out.print(superclass.getName());
 		}
 		out.println(" {");
-
-		// print constructors
-		Constructor[] ctors = c.getDeclaredConstructors();
-		for (int i=0; i< ctors.length; i++) {
-			if (i == 0) {
-				out.println();
-				out.println("\t// Constructors");
-			}
-			Constructor cons = ctors[i];
-			int mods = cons.getModifiers();
-			if (Modifier.isPrivate(mods))
-				continue;
-			out.print('\t');
-			printMods(mods, out);
-			out.print(trim(cons.getName()) + "(");
-			Class[] classes = cons.getParameterTypes();
-			for (int j = 0; j<classes.length; j++) {
-				if (j > 0) out.print(", ");
-				out.print(trim(classes[j].getName()) + ' ' + 
-						mkName(PREFIX_ARG, j));
-			}
-			out.println(") {");
-			out.print("\t}");
-		}
-
-		// print methods
-		Method[] methods = c.getDeclaredMethods();
-		for (int i=0; i< methods.length; i++) {
-			if (i == 0) {
-				out.println();
-				out.println("\t// Methods");
-			}
-			Method m = methods[i];
-			if (m.getName().startsWith("access$"))
-				continue;
-			int mods = m.getModifiers();
-			if (Modifier.isPrivate(mods))
-				continue;
-			out.print('\t');
-			printMods(mods, out);
-			final Class<?> returnType = m.getReturnType();
-			if (returnType == null) {
-				out.println("void /*XXX*/");
-			} else {
-				out.print(returnType.getName());
-			}
-			out.print(' ');
-			out.print(trim(m.getName()) + "(");
-			Class[] classes = m.getParameterTypes();
-			for (int j = 0; j<classes.length; j++) {
-				if (j > 0) out.print(", ");
-				out.print(trim(classes[j].getName()) + ' ' + 
-						mkName(PREFIX_ARG, j));
-			}
-			out.println(") {");
-			out.println("\treturn " + defaultValue(m.getReturnType()) + ';');
-			out.println("\t}");
-		}
-
+		
 		// print fields
 		Field[] flds = c.getDeclaredFields();
 		for (int i=0; i< flds.length; i++) {
@@ -154,8 +96,9 @@ public class RevEngAPI extends APIFormatter {
 			if (Modifier.isPrivate(mods))
 				continue;
 			out.print('\t');
-			printMods(mods, out);
-			out.print(trim(f.getType().getName()));
+			printModifiers(mods, out);
+			final Class<?> type = f.getType();
+			printType(out, type);
 			out.print(' ');
 			out.print(f.getName());
 			if (Modifier.isFinal(mods)) {
@@ -167,9 +110,91 @@ public class RevEngAPI extends APIFormatter {
 			}
 			out.println(';');
 		}
+
+		// print constructors
+		Constructor[] ctors = c.getDeclaredConstructors();
+		for (int i=0; i< ctors.length; i++) {
+			if (i == 0) {
+				out.println();
+				out.println("\t// Constructors");
+			}
+			Constructor constructor = ctors[i];
+			int mods = constructor.getModifiers();
+			if (Modifier.isPrivate(mods))
+				continue;
+			out.print('\t');
+			printModifiers(mods, out);
+			out.print(trim(constructor.getName()));
+			printArguments(out, constructor.getParameterTypes());
+			out.println(" {");
+			out.println("\t}");
+		}
+
+		// print methods
+		Method[] methods = c.getDeclaredMethods();
+		for (int i=0; i< methods.length; i++) {
+			if (i == 0) {
+				out.println();
+				out.println("\t// Methods");
+			}
+			Method method = methods[i];
+			if (method.getName().startsWith("access$"))
+				continue;
+			int mods = method.getModifiers();
+			if (Modifier.isPrivate(mods))
+				continue;
+			out.print('\t');
+			printModifiers(mods, out);
+			final Class<?> returnType = method.getReturnType();
+			printType(out, returnType);
+			out.print(' ');
+			out.print(trim(method.getName()));
+			printArguments(out, method.getParameterTypes());
+			if (Modifier.isAbstract(mods)) {
+				out.println(';');
+			} else {
+				out.println(" {");
+				if (!returnType.equals(void.class)) {
+					out.println("\treturn " + defaultValue(method.getReturnType()) + ';');
+				}
+				out.println("\t}");
+			}
+		}
+
+
+		// End of this class
 		out.println("}");
 		//out.flush();
 		out.close();
+	}
+
+	/**
+	 * @param out
+	 * @param classes
+	 */
+	private void printArguments(PrintWriter out, Class[] classes) {
+		out.print('(');
+		for (int j = 0; j<classes.length; j++) {
+			if (j > 0) out.print(", ");
+			printType(out, classes[j]);
+			out.print(' ');
+			out.print(mkName(PREFIX_ARG, j));
+		}
+		out.print(')');
+	}
+
+	/**
+	 * @param out
+	 * @param returnType
+	 */
+	private void printType(PrintWriter out, final Class<?> returnType) {
+		if (returnType == null) {
+			out.println("void /*XXX*/");
+		} else if (returnType.isArray()) {
+			out.print(returnType.getCanonicalName());
+		} else {
+			out.print(returnType.getName());
+		}
 	}
 
 	private String trim(String theName) {
@@ -200,7 +225,7 @@ public class RevEngAPI extends APIFormatter {
 		new ModInfo(2048, "strict"),
 	};
 
-	private void printMods(int mods, PrintWriter out) {
+	private void printModifiers(int mods, PrintWriter out) {
 		for (int i=0; i < modInfo.length; i++) {
 			if ((mods & modInfo[i].val) == modInfo[i].val) {
 				out.print(modInfo[i].name);
