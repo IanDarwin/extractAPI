@@ -109,13 +109,13 @@ public class RevEngAPI extends APIFormatter {
 		}
 
 		// print methods
-		Method[] mems = c.getDeclaredMethods();
-		for (int i=0; i< mems.length; i++) {
+		Method[] methods = c.getDeclaredMethods();
+		for (int i=0; i< methods.length; i++) {
 			if (i == 0) {
 				out.println();
 				out.println("\t// Methods");
 			}
-			Method m = mems[i];
+			Method m = methods[i];
 			if (m.getName().startsWith("access$"))
 				continue;
 			int mods = m.getModifiers();
@@ -123,7 +123,12 @@ public class RevEngAPI extends APIFormatter {
 				continue;
 			out.print('\t');
 			printMods(mods, out);
-			out.print(m.getReturnType());
+			final Class<?> returnType = m.getReturnType();
+			if (returnType == null) {
+				out.println("void /*XXX*/");
+			} else {
+				out.print(returnType.getName());
+			}
 			out.print(' ');
 			out.print(trim(m.getName()) + "(");
 			Class[] classes = m.getParameterTypes();
