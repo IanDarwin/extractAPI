@@ -80,67 +80,73 @@ public abstract class APIFormatter {
 		}
 		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
 			System.err.printf("pocessOneFile: Do not understand file %s%n", fileName);
+			return;
 		}
-			List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
-			ZipFile zipFile = null;
-
-			try {
-				zipFile = new ZipFile(new File(fileName));
-			} catch (ZipException zz) {
-				throw new FileNotFoundException(zz.toString() + ' ' + fileName);
-			}
-			Enumeration all = zipFile.entries();
-
-			// Put the entries into the List for sorting...
-			while (all.hasMoreElements()) {
-				ZipEntry zipEntry = (ZipEntry)all.nextElement();
-				zipEntries.add(zipEntry);
-			}
-
-			// Sort the entries (by class name)
-			Collections.sort(zipEntries, new Comparator<ZipEntry>() {
-				public int compare(ZipEntry o1, ZipEntry o2) {
-					return o1.getName().compareToIgnoreCase(o2.getName());
-				}				
-			});
-
-			// Process all the entries in this zip.
-			Iterator it = zipEntries.iterator();
-			while (it.hasNext()) {
-				ZipEntry zipEntry = (ZipEntry)it.next();
-				String zipName = zipEntry.getName();
-
-				// Ignore package/directory, other odd-ball stuff.
-				if (zipEntry.isDirectory()) {
-					continue;
-				}
-
-				// Ignore META-INF stuff
-				if (zipName.startsWith("META-INF/")) {
-					continue;
-				}
-
-				// Ignore images, HTML, whatever else we find.
-				if (!zipName.endsWith(".class")) {
-					continue;
-				}
-
-				// If doing CLASSPATH, Ignore com.* which are "internal API".
-				// 	if (doingStandardClasses && !zipName.startsWith("java")){
-				// 		continue;
-				// 	}
+		File f = new File(fileName);
+		if (!f.canRead()) {
+			System.err.printf("pocessOneFile: Can not read file %s%n", fileName);
+			return;
+		}
+		List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
+		ZipFile zipFile = null;
+		
+		try {
+			zipFile = new ZipFile(f);
+		} catch (ZipException zz) {
+			throw new FileNotFoundException(zz.toString() + ' ' + fileName);
+		}
+		Enumeration all = zipFile.entries();
+		
+		// Put the entries into the List for sorting...
+		while (all.hasMoreElements()) {
+			ZipEntry zipEntry = (ZipEntry)all.nextElement();
+			zipEntries.add(zipEntry);
+		}
+		
+		// Sort the entries (by class name)
+		Collections.sort(zipEntries, new Comparator<ZipEntry>() {
+			public int compare(ZipEntry o1, ZipEntry o2) {
+				return o1.getName().compareToIgnoreCase(o2.getName());
+			}				
+		});
+		
+		// Process all the entries in this zip.
+		Iterator it = zipEntries.iterator();
+		while (it.hasNext()) {
+			ZipEntry zipEntry = (ZipEntry)it.next();
+			String zipName = zipEntry.getName();
 			
-				// Convert the zip file entry name, like
-				//	java/lang/Math.class
-				// to a class name like
-				//	java.lang.Math
-				String className = zipName.replace('/', '.').
-					substring(0, zipName.length() - 6);	// 6 for ".class"
-
-				// Now process the class.
-				doClass(className);
-				
+			// Ignore package/directory, other odd-ball stuff.
+			if (zipEntry.isDirectory()) {
+				continue;
 			}
+			
+			// Ignore META-INF stuff
+			if (zipName.startsWith("META-INF/")) {
+				continue;
+			}
+			
+			// Ignore images, HTML, whatever else we find.
+			if (!zipName.endsWith(".class")) {
+				continue;
+			}
+			
+			// If doing CLASSPATH, Ignore com.* which are "internal API".
+			// 	if (doingStandardClasses && !zipName.startsWith("java")){
+			// 		continue;
+			// 	}
+			
+			// Convert the zip file entry name, like
+			//	java/lang/Math.class
+			// to a class name like
+			//	java.lang.Math
+			String className = zipName.replace('/', '.').
+			substring(0, zipName.length() - 6);	// 6 for ".class"
+			
+			// Now process the class.
+			doClass(className);
+			
+		}
 	}
 	
 	/**
