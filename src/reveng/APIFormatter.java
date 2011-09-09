@@ -170,7 +170,7 @@ public abstract class APIFormatter {
 				System.err.println("Error! " +e);
 			}
 		}
-		System.err.printf("Succeeded in %d classes out of %d attempted.%n", successes, tries);
+		System.err.printf("Succeeded in %d classes out of %d attempted in file %s.%n", successes, tries, fileName);
 	}
 	
 	/**
@@ -186,6 +186,7 @@ public abstract class APIFormatter {
 	}
 
 	/** Template method to format the fields and methods of one class, given its name.
+	 * @throws Exception 
 	 */
-	protected abstract void doClass(Class<?> c) throws IOException;
+	protected abstract void doClass(Class<?> c) throws Exception;
 }
