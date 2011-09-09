@@ -74,7 +74,7 @@ public abstract class APIFormatter {
 
 	/** For each Zip file, for each entry, xref it */
 	public void processOneFile(String fileName) throws IOException {
-		System.out.printf("APIFormatter.processOneFile(%s)%n", fileName);
+		System.out.printf("APIFormatter.processOneFile: %s.%n", fileName);
 		if (fileName.endsWith(".class")) {
 			try {
 				doClass(fileName);
@@ -101,8 +101,8 @@ public abstract class APIFormatter {
 		
 		try {
 			zipFile = new ZipFile(f);
-		} catch (ZipException zz) {
-			throw new FileNotFoundException(zz.toString() + ' ' + fileName);
+		} catch (ZipException ze) {
+			throw new FileNotFoundException(ze.toString() + ' ' + fileName);
 		}
 		@SuppressWarnings("unchecked")
 		Enumeration<ZipEntry> all = (Enumeration<ZipEntry>) zipFile.entries();
@@ -119,6 +119,8 @@ public abstract class APIFormatter {
 				return o1.getName().compareToIgnoreCase(o2.getName());
 			}				
 		});
+		
+		System.err.printf("We have %d entries to try in %s.%n", zipEntries.size(), fileName);
 		
 		// Process all the entries in this zip.
 		int tries = 0, successes = 0;
@@ -150,7 +152,7 @@ public abstract class APIFormatter {
 				substring(0, zipName.length() - 6);	// 6 for ".class"
 			
 			if (skipInternal && (className.startsWith("sun.") || className.startsWith("com."))) {
-				return;
+				continue;
 			}
 
 			// Now process the class.
@@ -177,12 +179,10 @@ public abstract class APIFormatter {
 	 * @throws IOException
 	 */
 	private void doClass(String className) throws Exception {
-		
-		
-			Class<?> c = Class.forName(className);
-			// Hand it off to the subclass...
-			doClass(c);
-
+	
+		Class<?> c = Class.forName(className);
+		// Hand it off to the subclass...
+		doClass(c);
 	}
 
 	/** Template method to format the fields and methods of one class, given its name.
