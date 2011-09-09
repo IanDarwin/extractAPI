@@ -151,14 +151,20 @@ public class RevEngAPI extends APIFormatter {
 			if (Modifier.isFinal(mods)) {
 				out.print(" = ");
 				boolean isString = type == String.class;
-				if (isString) out.print('"');
+				if (isString)
+					out.print('"');
+				Exception exc = null;
 				try {
 					out.print(f.get(null));
 				} catch (Exception ex) {
 					out.print(defaultValue(type));
-					if (isString) out.print('"');
-					out.println(";");
-					out.print("\t// XXX RevEng got " + ex.getClass() + " instead of value for above");
+					exc = ex;
+				}
+				if (isString)
+					out.print('"');
+				out.println(";");
+				if (exc != null) {
+					out.print("\t// XXX RevEng got " + exc + " fetching value for above");
 				}
 			}
 			out.println(';');
