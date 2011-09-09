@@ -169,5 +169,5 @@ public abstract class APIFormatter {
 
 	/** Template method to format the fields and methods of one class, given its name.
 	 */
-	protected abstract void doClass(Class c) throws IOException;
+	protected abstract void doClass(Class<?> c) throws IOException;
 }

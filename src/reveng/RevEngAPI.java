@@ -42,7 +42,7 @@ public class RevEngAPI extends APIFormatter {
 	}
 
 	/** Generate a .java file for the outline of the given class. */
-	public void doClass(Class c) throws IOException {
+	public void doClass(Class<?> c) throws IOException {
 		String className = c.getName();
 		
 		// Inner class in Zip or Jar file
@@ -66,7 +66,7 @@ public class RevEngAPI extends APIFormatter {
 		out.close();
 	}
 	
-	private void doClass(Class c, PrintWriter out, boolean isInner) {
+	private void doClass(Class<?> c, PrintWriter out, boolean isInner) {
 
 		// If in a package, say so.
 		Package packaje;
@@ -81,7 +81,11 @@ public class RevEngAPI extends APIFormatter {
 		// print class header
 		int cMods = c.getModifiers();
 		printModifiers(cMods, out);
-		if (c.isInterface()) {
+		if (c.isAnnotation()) {
+			out.print("@interface");
+		} else if (c.isEnum()) {
+			out.print("enum");
+		} else if (c.isInterface()) {
 			out.print("interface ");
 		} else {
 			out.print("class ");
@@ -90,15 +94,15 @@ public class RevEngAPI extends APIFormatter {
 		String sb = formatClassName(packageName, className);
 		out.print(sb);
 
-		final Class superclass = c.getSuperclass();
+		final Class<?> superclass = c.getSuperclass();
 		if (superclass != null) {
 			out.print(" extends ");
 			out.print(superclass.getName().replace('$', '.'));
 		}
 		boolean doneThisCategory = false;
 		
-		Class[] interfaces = c.getInterfaces();
-		for (Class interfaze : interfaces) {
+		Class<?>[] interfaces = c.getInterfaces();
+		for (Class<?> interfaze : interfaces) {
 			if (!doneThisCategory) {
 				out.print(c.isInterface() ? " extends" : " implements");
 				doneThisCategory = true;
@@ -111,8 +115,8 @@ public class RevEngAPI extends APIFormatter {
 		out.println(" {");		
 		
 		// print inner classes
-		Class[] inners = c.getDeclaredClasses();
-		for (Class inner : inners) {
+		Class<?>[] inners = c.getDeclaredClasses();
+		for (Class<?> inner : inners) {
 			if (!doneThisCategory) {
 				out.println();
 				out.println("\t// Inner classes");
@@ -130,10 +134,9 @@ public class RevEngAPI extends APIFormatter {
 				out.println();
 				out.println("\t// Fields");
 				doneThisCategory = true;
-			}			
+			}
+			f.setAccessible(true);  // bye-bye "private"
 			int mods = f.getModifiers();
-			if (Modifier.isPrivate(mods))
-				continue;
 			out.print('\t');
 			printModifiers(mods, out);
 			final Class<?> type = f.getType();
@@ -158,9 +161,9 @@ public class RevEngAPI extends APIFormatter {
 
 		// print constructors
 		doneThisCategory = false;
-		Constructor[] constructors = c.getDeclaredConstructors();
+		Constructor<?>[] constructors = c.getDeclaredConstructors();
 		sortMembersArray(constructors);
-		for (Constructor constructor : constructors) {
+		for (Constructor<?> constructor : constructors) {
 			if (!doneThisCategory) {
 				out.println();
 				out.println("\t// Constructors");
@@ -190,9 +193,8 @@ public class RevEngAPI extends APIFormatter {
 			}
 			if (method.getName().startsWith("access$"))
 				continue;
+			method.setAccessible(true);  // bye-bye "private"	
 			int mods = method.getModifiers();
-			if (Modifier.isPrivate(mods))
-				continue;
 			out.print('\t');
 			printModifiers(mods, out);
 			final Class<?> returnType = method.getReturnType();
