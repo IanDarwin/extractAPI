@@ -28,8 +28,8 @@ public abstract class APIFormatter {
 
 	/** True if we are doing classpath, so only do java. and javax. */
 	protected static boolean doingStandardClasses = true;
-	/** True to skip names that begin "sun." or "com.sun." */
-	private boolean skipSunInternal = true;	// change to false if you make it an option.
+	/** True to skip names that begin "sun." or "com." */
+	private boolean skipInternal = true;	// change to false if you make it an option.
 	
 	protected int doArgs(String[] argv) throws IOException {
 		/** Counter of fields/methods printed. */
@@ -76,15 +76,20 @@ public abstract class APIFormatter {
 	public void processOneFile(String fileName) throws IOException {
 		System.out.printf("APIFormatter.processOneFile(%s)%n", fileName);
 		if (fileName.endsWith(".class")) {
-			doClass(fileName);
+			try {
+				doClass(fileName);
+			} catch (Exception e) {
+				System.err.printf("File %s failed (%s)%n", fileName, e);
+			}
+			return;
 		}
 		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
-			System.err.printf("pocessOneFile: Do not understand file %s%n", fileName);
+			System.err.printf("processOneFile: Do not understand file %s%n", fileName);
 			return;
 		}
 		File f = new File(fileName);
 		if (!f.canRead()) {
-			System.err.printf("pocessOneFile: Can not read file %s%n", fileName);
+			System.err.printf("processOneFile: Can not read file %s%n", fileName);
 			return;
 		}
 		List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
@@ -95,11 +100,12 @@ public abstract class APIFormatter {
 		} catch (ZipException zz) {
 			throw new FileNotFoundException(zz.toString() + ' ' + fileName);
 		}
-		Enumeration all = zipFile.entries();
+		@SuppressWarnings("unchecked")
+		Enumeration<ZipEntry> all = (Enumeration<ZipEntry>) zipFile.entries();
 		
 		// Put the entries into the List for sorting...
 		while (all.hasMoreElements()) {
-			ZipEntry zipEntry = (ZipEntry)all.nextElement();
+			ZipEntry zipEntry = all.nextElement();
 			zipEntries.add(zipEntry);
 		}
 		
@@ -111,7 +117,8 @@ public abstract class APIFormatter {
 		});
 		
 		// Process all the entries in this zip.
-		Iterator it = zipEntries.iterator();
+		int tries = 0, successes = 0;
+		Iterator<ZipEntry> it = zipEntries.iterator();
 		while (it.hasNext()) {
 			ZipEntry zipEntry = (ZipEntry)it.next();
 			String zipName = zipEntry.getName();
@@ -131,22 +138,33 @@ public abstract class APIFormatter {
 				continue;
 			}
 			
-			// If doing CLASSPATH, Ignore com.* which are "internal API".
-			// 	if (doingStandardClasses && !zipName.startsWith("java")){
-			// 		continue;
-			// 	}
-			
 			// Convert the zip file entry name, like
 			//	java/lang/Math.class
 			// to a class name like
 			//	java.lang.Math
 			String className = zipName.replace('/', '.').
-			substring(0, zipName.length() - 6);	// 6 for ".class"
+				substring(0, zipName.length() - 6);	// 6 for ".class"
 			
+			if (skipInternal && (className.startsWith("sun.") || className.startsWith("com."))) {
+				return;
+			}
+
 			// Now process the class.
-			doClass(className);
-			
+			try {
+				++tries;
+				doClass(className);
+				++successes;
+			} catch (ClassNotFoundException e) {
+				System.err.println("Error: " + e);
+			} catch (ClassFormatError e) {
+				System.err.println("Error! " +e);
+			} catch (NoClassDefFoundError e) {
+				System.err.println("Error! " +e);
+			} catch (Exception e) {
+				System.err.println("Error! " +e);
+			}
 		}
+		System.err.printf("Succeeded in %d classes out of %d attempted.%n", successes, tries);
 	}
 	
 	/**
@@ -154,17 +172,13 @@ public abstract class APIFormatter {
 	 * @param className
 	 * @throws IOException
 	 */
-	private void doClass(String className) throws IOException {
-		if (skipSunInternal && (className.startsWith("sun.") || className.startsWith("com.sun."))) {
-			return;
-		}
-		try {
-			Class c = Class.forName(className);
+	private void doClass(String className) throws Exception {
+		
+		
+			Class<?> c = Class.forName(className);
 			// Hand it off to the subclass...
 			doClass(c);
-		} catch (ClassNotFoundException e) {
-			System.err.println("Error: " + e);
-		}
+
 	}
 
 	/** Template method to format the fields and methods of one class, given its name.
