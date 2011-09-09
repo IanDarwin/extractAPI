@@ -83,13 +83,17 @@ public abstract class APIFormatter {
 			}
 			return;
 		}
-		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
-			System.err.printf("processOneFile: Do not understand file %s%n", fileName);
-			return;
-		}
 		File f = new File(fileName);
 		if (!f.canRead()) {
 			System.err.printf("processOneFile: Can not read file %s%n", fileName);
+			return;
+		}
+		if (!f.isFile()) {
+			System.err.printf("processOneFile: %s not a regular file.%n", fileName);
+			return;
+		}
+		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
+			System.err.printf("processOneFile: Do not understand file %s%n", fileName);
 			return;
 		}
 		List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
