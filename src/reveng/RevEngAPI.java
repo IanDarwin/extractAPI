@@ -283,7 +283,7 @@ public class RevEngAPI extends APIFormatter {
 	 * @param out
 	 * @param classes
 	 */
-	private void printArguments(PrintWriter out, Class[] classes) {
+	private void printArguments(PrintWriter out, Class<?>[] classes) {
 		out.print('(');
 		for (int j = 0; j<classes.length; j++) {
 			if (j > 0) out.print(", ");
@@ -340,7 +340,7 @@ public class RevEngAPI extends APIFormatter {
 		}
 	}
 
-	static String defaultValue(Class c) {
+	static String defaultValue(Class<?> c) {
 		if (c.getName().equals("boolean"))
 			return "false";
 		if (c.isPrimitive()) {
