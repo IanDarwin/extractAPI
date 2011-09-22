@@ -31,7 +31,7 @@ public abstract class APIFormatter {
 	/** True to skip names that begin "sun." or "com." */
 	private boolean skipInternal = true;	// change to false if you make it an option.
 	
-	protected int doArgs(String[] argv) throws IOException {
+	protected int doArgs(String[] argv) throws Throwable {
 		/** Counter of fields/methods printed. */
 		int n = 0;
 
@@ -60,7 +60,7 @@ public abstract class APIFormatter {
 	 * @param classPath
 	 * @throws IOException
 	 */
-	private void doClassPath(String classPath) throws IOException {
+	private void doClassPath(String classPath) throws Throwable {
 		//  break apart with path sep.
 		String pathSep = System.getProperty("path.separator");
 		StringTokenizer st = new StringTokenizer(classPath, pathSep);
@@ -72,8 +72,9 @@ public abstract class APIFormatter {
 		}
 	}
 
-	/** For each Zip file, for each entry, xref it */
-	public void processOneFile(String fileName) throws IOException {
+	/** For each Zip file, for each entry, xref it 
+	 * @throws Throwable */
+	public void processOneFile(String fileName) throws Throwable {
 		System.out.printf("APIFormatter.processOneFile: %s.%n", fileName);
 		if (fileName.endsWith(".class")) {
 			try {
@@ -174,12 +175,12 @@ public abstract class APIFormatter {
 	}
 	
 	/**
-	 * This has the same name and argument as the Template Method but is only used here.
+	 * This has the same name as the Template Method but a different argument.
 	 * @param className
+	 * @throws Throwable 
 	 * @throws IOException
 	 */
-	private void doClass(String className) throws Exception {
-	
+	private void doClass(String className) throws Throwable {	
 		Class<?> c = Class.forName(className);
 		// Hand it off to the subclass...
 		doClass(c);
@@ -187,6 +188,7 @@ public abstract class APIFormatter {
 
 	/** Template method to format the fields and methods of one class, given its name.
 	 * @throws Exception 
+	 * @throws Throwable 
 	 */
-	protected abstract void doClass(Class<?> c) throws Exception;
+	protected abstract void doClass(Class<?> c) throws Throwable;
 }
