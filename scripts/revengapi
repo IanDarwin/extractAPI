@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Run the reverse engineering api on an existing JAR file
+# Creates output in directory structure form under OUTPUTDIR (/tmp)
+
+REVENG_HOME=$HOME/workspace/revengapi/target/*.jar
+
+OUTPUTDIR=/tmp
+
+USAGE="$0 [-d dir] jar"
+
+function usage {		# give usage message, and exit
+	echo "Usage: ${USAGE}" 2>&1
+	exit 1
+}
+
+while getopts "d:" opt
+do
+	case "$opt" in
+		d)	OUTPUTDIR=${OPTARG};;
+		*)	usage;;
+	esac
+done
+shift `expr $OPTIND - 1`		 # leave just filenames
+
+JAR=${1?Usage: $0 jar}
+
+cd ${OUTPUTDIR}
+
+# Target JAR must be on CP since we use JDK Reflection, but also passed
+# as argument since we open it with java.util.zip.
+
+java -cp ${REVENG_HOME}:${JAR} reveng.RevEngAPI -b ${JAR}

@@ -31,7 +31,7 @@ public abstract class APIFormatter {
 	/** True to skip names that begin "sun." or "com." */
 	private boolean skipInternal = true;	// change to false if you make it an option.
 	
-	protected int doArgs(String[] argv) throws Throwable {
+	protected int doArgs(String[] argv) throws IOException {
 		/** Counter of fields/methods printed. */
 		int n = 0;
 
@@ -39,12 +39,16 @@ public abstract class APIFormatter {
 		// -s - skipSunInternal = true;
 		
 		if (argv.length == 1 && "-b".equals(argv[0])) {
-			String s = System.getProperty("sun.boot.class.path");
-			doClassPath(s);
+			String classPath = System.getProperty("sun.boot.class.path");
+			for (String s : splitClassPath(classPath)) {
+				processOneFile(s);
+			}
 		} else if (argv.length == 0) {
 			// No arguments, look in CLASSPATH
 			String classPath = System.getProperty("java.class.path");
-			doClassPath(classPath);
+			for (String s : splitClassPath(classPath)) {
+				processOneFile(s);
+			}
 		} else {
 			// We have arguments, process them as zip/jar files
 			// doingStandardClasses = false;
@@ -60,28 +64,27 @@ public abstract class APIFormatter {
 	 * @param classPath
 	 * @throws IOException
 	 */
-	private void doClassPath(String classPath) throws Throwable {
+	List<String> splitClassPath(String classPath) {
+		List<String> results = new ArrayList<>();
 		//  break apart with path sep.
 		String pathSep = System.getProperty("path.separator");
 		StringTokenizer st = new StringTokenizer(classPath, pathSep);
 		// Process each zip in classpath
 		while (st.hasMoreTokens()) {
 			String thisFile = st.nextToken();
-			System.err.println("Trying path " + thisFile);
-			processOneFile(thisFile);
+			results.add(thisFile);
 		}
+		return results;
 	}
 
-	/** For each Zip file, for each entry, xref it 
-	 * @throws Throwable */
-	public void processOneFile(String fileName) throws Throwable {
-		System.out.printf("APIFormatter.processOneFile: %s.%n", fileName);
+	/** For each Zip file, for each entry, xref it */
+	public void processOneFile(String fileName) throws IOException {
+		System.out.printf("APIFormatter.processOneFile(%s)%n", fileName);
 		if (fileName.endsWith(".class")) {
-			try {
-				doClass(fileName);
-			} catch (Exception e) {
-				System.err.printf("File %s failed (%s)%n", fileName, e);
-			}
+			doClass(fileName);
+		}
+		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
+			System.err.printf("processOneFile: Do not understand file %s%n", fileName);
 			return;
 		}
 		File f = new File(fileName);
@@ -91,10 +94,6 @@ public abstract class APIFormatter {
 		}
 		if (!f.isFile()) {
 			System.err.printf("processOneFile: %s not a regular file.%n", fileName);
-			return;
-		}
-		if (!(fileName.endsWith(".jar") || fileName.endsWith(".zip"))) {
-			System.err.printf("processOneFile: Do not understand file %s%n", fileName);
 			return;
 		}
 		List<ZipEntry> zipEntries = new ArrayList<ZipEntry>();
@@ -145,12 +144,17 @@ public abstract class APIFormatter {
 				continue;
 			}
 			
+			// If doing CLASSPATH, Ignore com.* which are "internal API".
+			// 	if (doingStandardClasses && !zipName.startsWith("java")){
+			// 		continue;
+			// 	}
+			
 			// Convert the zip file entry name, like
 			//	java/lang/Math.class
 			// to a class name like
 			//	java.lang.Math
 			String className = zipName.replace('/', '.').
-				substring(0, zipName.length() - 6);	// 6 for ".class"
+			substring(0, zipName.length() - 6);	// 6 for ".class"
 			
 			if (skipInternal && (className.startsWith("sun.") || className.startsWith("com."))) {
 				continue;
@@ -175,20 +179,25 @@ public abstract class APIFormatter {
 	}
 	
 	/**
-	 * This has the same name as the Template Method but a different argument.
+	 * This has the same name but different argument type than the Template Method.
 	 * @param className
-	 * @throws Throwable 
-	 * @throws IOException
+	 * @throws Exception
 	 */
-	private void doClass(String className) throws Throwable {	
-		Class<?> c = Class.forName(className);
-		// Hand it off to the subclass...
-		doClass(c);
+	private void doClass(String className) throws Exception {
+		if (skipSunInternal && (className.startsWith("sun.") || className.startsWith("com.sun."))) {
+			return;
+		}
+		try {
+			Class c = Class.forName(className);
+			// Hand it off to the subclass...
+			doClass(c);
+		} catch (ClassNotFoundException e) {
+			System.err.println("Error: " + e);
+		}
 	}
 
 	/** Template method to format the fields and methods of one class, given its name.
 	 * @throws Exception 
-	 * @throws Throwable 
 	 */
-	protected abstract void doClass(Class<?> c) throws Throwable;
+	protected abstract void doClass(Class<?> c) throws Exception;
 }

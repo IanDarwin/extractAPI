@@ -1,17 +1,21 @@
 package reveng;
 
-import junit.framework.TestCase;
+import org.junit.*;
+import static org.junit.Assert.*;
 
-public class TestRevEngUtils extends TestCase {
+public class TestRevEngUtils {
+
+	@Test
 	public void testFormatClassName() {
 		assertEquals("Object", RevEngAPI.formatClassName("java.lang", "java.lang.Object"));
-		assertEquals("ActionEvent", RevEngAPI.formatClassName("java.awt.evetn", "java.awt.event.ActionEvent"));
+		assertEquals("ActionEvent", RevEngAPI.formatClassName("java.awt.event", "java.awt.event.ActionEvent"));
 		assertEquals("Inner", RevEngAPI.formatClassName("java.lang", "java.lang.Byte$Inner"));
 	}
-	
+
+	@Test
 	public void testdefaultValue() {
 		assertEquals("0", RevEngAPI.defaultValue(int.class));
-		// XXX assertEquals("0", RevEngAPI.defaultValue(Double.class));
+		assertEquals("0", RevEngAPI.defaultValue(double.class));
 		assertEquals("null", RevEngAPI.defaultValue(String.class));
 		assertEquals("false", RevEngAPI.defaultValue(boolean.class));
 	}
