@@ -31,7 +31,7 @@ public abstract class APIFormatter {
 	/** True to skip names that begin "sun." or "com." */
 	private boolean skipInternal = true;	// change to false if you make it an option.
 	
-	protected int doArgs(String[] argv) throws IOException {
+	protected int doArgs(String[] argv) throws Exception {
 		/** Counter of fields/methods printed. */
 		int n = 0;
 
@@ -78,7 +78,7 @@ public abstract class APIFormatter {
 	}
 
 	/** For each Zip file, for each entry, xref it */
-	public void processOneFile(String fileName) throws IOException {
+	public void processOneFile(String fileName) throws Exception {
 		System.out.printf("APIFormatter.processOneFile(%s)%n", fileName);
 		if (fileName.endsWith(".class")) {
 			doClass(fileName);
@@ -184,7 +184,7 @@ public abstract class APIFormatter {
 	 * @throws Exception
 	 */
 	private void doClass(String className) throws Exception {
-		if (skipSunInternal && (className.startsWith("sun.") || className.startsWith("com.sun."))) {
+		if (skipInternal && (className.startsWith("sun.") || className.startsWith("com.sun."))) {
 			return;
 		}
 		try {
