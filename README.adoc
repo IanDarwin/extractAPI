@@ -1,4 +1,4 @@
-= extractAPI
+= extractAPI (formerly called revengapi)
 
 This is an attempt to extract a compilable version of an API given only its .class file(s).
 
