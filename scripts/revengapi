@@ -3,7 +3,8 @@
 # Run the reverse engineering api on an existing JAR file
 # Creates output in directory structure form under OUTPUTDIR (/tmp)
 
-REVENG_HOME=$HOME/workspace/revengapi/target/*.jar
+V=extractAPI-1.0.0-SNAPSHOT
+REVENG_JAR=$HOME/workspace/extractAPI/target/${V}.jar
 
 OUTPUTDIR=/tmp
 
@@ -24,10 +25,14 @@ done
 shift `expr $OPTIND - 1`		 # leave just filenames
 
 JAR=${1?Usage: $0 jar}
+case ${JAR} in
+	/*)	;;
+	*)	JAR=$(PWD)/${JAR};;
+esac
 
 cd ${OUTPUTDIR}
 
 # Target JAR must be on CP since we use JDK Reflection, but also passed
 # as argument since we open it with java.util.zip.
 
-java -cp ${REVENG_HOME}:${JAR} reveng.RevEngAPI -b ${JAR}
+java -cp ${REVENG_JAR}:${JAR} reveng.RevEngAPI -b ${JAR}
