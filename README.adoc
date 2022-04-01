@@ -9,11 +9,11 @@ to be not technically "reverse engineering" as conventionally understood).
 I would like to suggest to someone starting on a similar project to use a byte code engineering
 library (like, well, Apache BCEL) to get information, instead of using Reflection.
 
-The current version produces a "java.lang" package that compiles with about 80 errors,
+That said, as of 2012, the current version produces a "java.lang" package that compiles with about 80 errors,
 and a "java.awt" and all subclasses that compiles with only about 300 errors, so it's still
 probably less work than typing an API in from scratch, particularly as many of the errors are
 either:
 
-. invalid "final" values;
-. unknown implicit superclasses;
-. cascading errors resulting from the above.
+* invalid "final" values;
+* unknown implicit superclasses;
+* cascading errors resulting from the above.
