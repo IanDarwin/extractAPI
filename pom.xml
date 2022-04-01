@@ -9,10 +9,12 @@
 	<packaging>jar</packaging>
 	<inceptionYear>2005</inceptionYear>
 
+	<name>extractapi</name>
 	<description>
-		Reverse-engineer an API: Extracts the API from Java class files.
+		Reverse-engineer an API: Extracts the API from Java class files. That is,
+		prepare a compilable API skeleton from an existing API, for re-implementation or mock test generation.
 	</description>
-	<url>http://darwinsys.com/</url>
+	<url>http://darwinsys.com/freeware</url>
 	<licenses>
 		<license>
 		<name>BSD 2-Clause "New" or "Revised" license</name>
@@ -41,7 +43,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<javase.version>1.8</javase.version>
+		<javase.version>11</javase.version>
 		<maven.compiler.source>${javase.version}</maven.compiler.source>
 		<maven.compiler.target>${javase.version}</maven.compiler.target>
 		<maven.compiler.testSource>${javase.version}</maven.compiler.testSource>
