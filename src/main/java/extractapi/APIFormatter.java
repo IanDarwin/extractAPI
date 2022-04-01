@@ -113,20 +113,14 @@ public abstract class APIFormatter {
 			zipEntries.add(zipEntry);
 		}
 		
-		// Sort the entries (by class name)
-		Collections.sort(zipEntries, new Comparator<ZipEntry>() {
-			public int compare(ZipEntry o1, ZipEntry o2) {
-				return o1.getName().compareToIgnoreCase(o2.getName());
-			}				
-		});
+		// Sort the entries by class name
+		Collections.sort(zipEntries, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 		
 		System.err.printf("We have %d entries to try in %s.%n", zipEntries.size(), fileName);
 		
 		// Process all the entries in this zip.
 		int tries = 0, successes = 0;
-		Iterator<ZipEntry> it = zipEntries.iterator();
-		while (it.hasNext()) {
-			ZipEntry zipEntry = (ZipEntry)it.next();
+		for (ZipEntry zipEntry : zipEntries) {
 			String zipName = zipEntry.getName();
 			
 			// Ignore package/directory, other odd-ball stuff.
